@@ -20,3 +20,6 @@ class Star(Effect):
             final_image.paste(rotated_frame, (0, 0), rotated_frame)
         frame = np.array(final_image)
         return frame
+
+    def next_frame(self):
+        pass
