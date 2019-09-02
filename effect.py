@@ -11,3 +11,6 @@ class Effect(ABC):
     @abstractmethod
     def apply(self, frame, frame_number):
         return frame
+
+    def next_frame(self):
+        return None
