@@ -10,7 +10,7 @@ class MovieOutput:
     def __init__(self, filename, frame_dimensions, frame_rate):
         self.filename = filename
         if os.path.exists(filename):
-            raise FileExistsError
+            raise FileExistsError(filename)
         self.frame_dimensions = frame_dimensions
         self.frame_rate = frame_rate
         self.pipe = self.open_video()

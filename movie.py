@@ -13,13 +13,11 @@ class Movie:
         if not os.path.exists(filename):
             raise FileNotFoundError
         self.current_frame = -1
-        self.frames = np.array([])
-        self.frame_dimensions, self.average_frame_rate = self.get_dimensions_and_maximum_start_time()
+        self.frame_dimensions, self.average_frame_rate = self.get_dimensions_and_frame_rate()
         self.pipe = self.open_video()
         self.keep_last = keep_last
-        self.buffer_offset = 0
 
-    def get_dimensions_and_maximum_start_time(self):
+    def get_dimensions_and_frame_rate(self):
         command = [FFPROBE_BINARY,
                    '-v', '0',
                    '-of', 'compact=nk=1:p=0',
@@ -44,37 +42,13 @@ class Movie:
                    '-']
         return sp.Popen(command, stdout=sp.PIPE, stderr=sp.PIPE, bufsize=10 ** 5)
 
-    def read_next_frame(self):
+    def get_next_frame(self):
         raw_image = self.pipe.stdout.read(
             self.frame_dimensions[0] * self.frame_dimensions[1] * self.frame_dimensions[2])
-        self.pipe.stdout.flush()
         image = np.fromstring(raw_image, dtype='uint8')
         if image.size == 0:
             self.has_frames = False
             return
-        image = image.reshape((1,) + self.frame_dimensions)
-        if self.frames.size == 0:
-            self.frames = image
-        else:
-            self.frames = np.concatenate((self.frames, image))
-
-    def next_frame(self):
+        image = image.reshape(self.frame_dimensions)
         self.current_frame += 1
-        if self.frames.shape[0] <= self.current_frame:
-            self.read_next_frame()
-        if self.keep_last >= 0 and self.frames.shape[0] > self.keep_last + 1:
-            self.frames = self.frames[1:]
-            self.buffer_offset += 1
-
-    def previous_frame(self):
-        self.current_frame -= 1
-        if self.current_frame < 0:
-            self.current_frame = -1
-
-    def get_frame(self):
-        if self.current_frame - self.buffer_offset < 0:
-            return None
-        elif self.current_frame - self.buffer_offset >= self.frames.shape[0]:
-            return None
-        else:
-            return self.frames[self.current_frame - self.buffer_offset]
+        return image
